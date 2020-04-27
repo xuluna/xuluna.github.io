@@ -1,0 +1,16 @@
+.description {
+  text-align: -webkit-auto;
+  max-width: 70%;
+  margin: 0 auto;
+}
+.post-content img {
+  margin-left: 1em;
+}
+.post-content {
+  font-family: AvenirNext-Regular;
+  font-size: larger;
+}
+.description a {
+  color: #00f;
+  text-decoration: underline;
+}
