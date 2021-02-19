@@ -16,7 +16,7 @@
     <meta name="keywords" content="luna, xu, computer science, research">
 
 
-<title>Fast RDMA-Based Ordered Key-Value Store Using Remote Learned Cache | Luna Xu&#39;s Website</title>
+<title>From WiscKey to Bourbon: A Learned Index for Log-Structured Merge Trees | Luna Xu&#39;s Website</title>
 
 
 
@@ -183,7 +183,7 @@
     
     <article class="post-wrap">
         <header class="post-header">
-            <h1 class="post-title">Fast RDMA-Based Ordered Key-Value Store Using Remote Learned Cache</h1>
+            <h1 class="post-title">From WiscKey to Bourbon: A Learned Index for Log-Structured Merge Trees</h1>
             
             <div class="post-meta">
                 
@@ -193,7 +193,7 @@
                 
                 <span class="post-time">
                     Date: <a
-                        href="#">February 11, 2021&nbsp;&nbsp;16:01:11</a>
+                        href="#">February 19, 2021&nbsp;&nbsp;12:03:15</a>
                 </span>
                 
                 
@@ -209,68 +209,66 @@
         </header>
 
         <div class="post-content">
-            <p>This is the first paper of the paper reading series. I have been following <a href="https://blog.acolyer.org" target="_blank" rel="noopener">the morning paper</a> for a long time. Sadly in recent <a href="https://blog.acolyer.org/2021/02/08/the-ants-and-the-pheromones/" target="_blank" rel="noopener">post</a>, it is decided the morning paper is being paused and we don’t know when it will come back. Well I thought I would love to keep track of papers I am interested in so that later on I can come back and dig deeper with a specific interest. While waiting for the morning paper to come back (hopefully), I would start updating the papers here. The frequency would be one paper per week (hopefully), and in principal it will continue even after the morning paper is resumed for the purpose of personal anchor of papers of interests.</p>
-<p>This week’s paper is in OSDI’20 from Haibo Chen’s group in Jiaotong University. Yet another Key-Value Store paper, but uses Machine Learning techniques to reduce the caching size.</p>
-<h3 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h3><img src="/2021/02/11/paper1-1/1.jpg" class="" title="Trade-offs">
+            <p>This week we look at yet another paper about learned index. This paper also appears in OSDI’20. It is not the first time I see conferences accept multiple papers that have relevant contents. I am curious if the decision of accepting a paper is relevant to the topic of it other than purely the quality, a similar thing to diversity. Do conferences take care of topic diversity or the papers are solely judged by the quality of it. Somebody could do an analysis of acceptance rate by topic for each conference each year (maybe using NLP techniques to understand the content of a paper). Coming back to the paper, it is a work from Remzi’s group in U of Wisconsin - Madison. Different from the <a href="https://xuluna.github.io/2021/02/11/paper1-1/">paper last week</a>, this one focuses on the implementation in LevelDB with <code>LSM-Tree</code> as opposed to <code>B+ Tree</code> before.</p>
+<h3 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h3><ul>
+<li>Learned Index<ul>
+<li>Data lookup performance (latency) is sensitive in very large data sets.</li>
+<li><code>B-Tree</code> is a index data structure that records the position of a piece of data in a (partially) sorted array. </li>
+<li>Learned index use ML to map <code>Key=position</code> (<a href="https://www.cl.cam.ac.uk/~ey204/teaching/ACS/R244_2018_2019/papers/Kraska_SIGMOD_2018.pdf" target="_blank" rel="noopener">learned index</a>). The original model is LR <code>f(x)=ax+b</code> (yes only 2 weights).</li>
+</ul>
+</li>
+<li>Problem 1: Model needs to be retrained upon data writes.</li>
+<li>Problem 2: How to integrate this into production system (not sorted array but complex tree data structures).</li>
+</ul>
+<h3 id="Design-Bourbon"><a href="#Design-Bourbon" class="headerlink" title="Design (Bourbon)"></a>Design (Bourbon)</h3><!--  <img src="/2021/02/19/paper2/leveldb.jpg" class="" title="LevelDB uses LSM-Tree"> -->
+<img src="leveldb.jpg" width="300 em" alt="LevelDB uses LSM-Tree" title="LevelDB uses LSM-Tree" style="float: right">
+
 
 <ul>
-<li>Server-centric design consumes a lot of server-side CPU resources. <ul>
-<li>CPU speed grows slower than network speed, thus becomes a performance bottleneck. </li>
-<li>CPU cache is constantly poluted by random access the data preserved in B+ tree (KV Store data structure).</li>
+<li>A learned index for <code>LSM-Tree</code><ul>
+<li>Why <code>LSM-Tree</code>? Immutable SSTables</li>
+<li>LevelDB uses <code>LSM-Tree</code>. There’s no updates to SSTables. They only get deleted during compaction. They are always compacted/merged to the next level if the previous level is filled. The model needs to be retrained when a level data is changed &lt;-&gt; retrain at every data writes.</li>
 </ul>
 </li>
-<li>Client-direct design uses client-side NIC to directly read data from server through single-sided RDMA.<ul>
-<li>Good: Bypass CPU bottleneck.</li>
-<li>Bad: Limited operations (read/write) makes traversing a B+ tree multiple round trips.</li>
-</ul>
-</li>
-<li>Client-side caching of the B+ tree.<ul>
-<li>Good: No need to do remote access, and use client-side CPU to traverse the B+ tree.</li>
-<li>Bad: Consumes too much memory.</li>
-<li>Bad: If there’s a cache miss, client has to get the whole tree from the server.</li>
+<li>How and when to learn the SSTables<ul>
+<li>Lower-level tables live longer (less frequently we need to retrain the model)</li>
+<li>Higher-level tables are more valuable because they are the ones that are frequently queried</li>
+<li>Guildline: <ul>
+<li>Prefer to model lower-level tables, and wait some time for the tables to be stable</li>
+<li>Also learn higher-level tables, and workload/data-aware technique is needed</li>
 </ul>
 </li>
 </ul>
-<h3 id="Design-XStore"><a href="#Design-XStore" class="headerlink" title="Design (XStore)"></a>Design (XStore)</h3><ul>
-<li>Hybrid operations<ul>
-<li>Server-centric for data write because NIC cannot handle complex tree insert/update.</li>
-<li>Client-direct get/scan to server hashtable index.</li>
-<li>Client-side <strong>Learned Cache</strong>.</li>
+</li>
+<li><a href="https://mine.kaust.edu.sa/Documents/papers/VLDBJ_2014_Maximum_error-bounded_Piecewise_Linear_Representation_for_online_stream_approximation.pdf" target="_blank" rel="noopener">Greedy Piecewise Linear Regression</a> @VLDB’14<ul>
+<li>Bourbon uses this algorithm which is basically mulitple linear segments to predict the position within an error bound</li>
+<li>(bad point) Not so sure why they use this method instead of simple LR</li>
 </ul>
 </li>
-<li>Learned Cache<ul>
-<li>Enlightened from <a href="https://www.cl.cam.ac.uk/~ey204/teaching/ACS/R244_2018_2019/papers/Kraska_SIGMOD_2018.pdf" target="_blank" rel="noopener">learned index</a> @SIGMOD’18.</li>
-<li>At the server side, learn a model of the mapping of <code>Key = B+ address</code>. Then send this model (Linear Regression) to client. </li>
-<li>Learned model is usually very small.</li>
-<li>The model gives a range of addresses given a key -&gt; 100% guarantee that the key is within these addresses.</li>
+<li>WiscKey<ul>
+<li>A previous work that seperates Key and Value to reduce the <code>LSM-Tree</code> size</li>
+<li>Each node in the <code>LSM-Tree</code> is <code>(Key, value_addr)</code></li>
+<li>Lookup time: 4us</li>
+<li>Burbon reduces time to 2-3us (<code>LSM-Tree</code> lookup times)</li>
 </ul>
 </li>
-<li>Two round trips to get a key<ul>
-<li>Given the addresses, get all keys with the address -&gt; determine which address is the actual one.</li>
-<li>Go the address and fetch the value.</li>
-</ul>
-</li>
-<li>Challenge 1: learned index assumes the addresses are sorted -&gt; not in B+ tree<ul>
-<li>Make a logical address to leaf nodes that are sorted.</li>
-<li>Trasition table that maps <code>logical address = physical address</code>. </li>
-<li>Trasition table is also cached in client-side.</li>
-</ul>
-</li>
-<li>Challenge 2: KV Store is dynamically changing due to updates<ul>
-<li>Retrain the model after update -&gt; invalidate client mode -&gt; client can fetch the model on-demand. </li>
-<li>Client can retrive partial model as the model is partitioned. </li>
+<li>Runtime analysis on trade-offs<ul>
+<li>Learn (CPU cost) vs No-learn (Lookup cost)</li>
+<li>CPU cost is estimated by the table size (larger table has more datapoints to learn)</li>
+<li>Lookup cost is estimated by baseline lookup time vs model lookup time multiply by how many lookups served (history data monitored)</li>
+<li>If write-intensive, No-learn is better (model change all the time -&gt; learning cost is high, less lookups -&gt; no benefit)</li>
+<li>If read-intensive, Learn is better</li>
 </ul>
 </li>
 </ul>
 <h3 id="Evaluation"><a href="#Evaluation" class="headerlink" title="Evaluation"></a>Evaluation</h3><ul>
-<li>Testbed: 16-node cluster (24 cores), 2 ConnectX-4 RDMA (one node is server, rest is clients)</li>
-<li>Workload: YCSB</li>
-<li>Highlight:<ul>
-<li>The memory footprint is very small (16B size for the model). 150MB vs 600MB</li>
+<li>All experiments are comparing WiscKey vs Bourbon</li>
+<li>Microbenchmark: 100% Uniform reads on different datasets</li>
+<li>Microbenchmark: 100% read with different distributions (Uniform, seq, Zipfian, etc.)</li>
+<li>Macrobenchmark: YCSB</li>
+<li>(bad point) There is no comparison between different models (accuracy and speed) -&gt; why use Greedy PLR vs LR?</li>
 </ul>
-</li>
-</ul>
-<h3 id="Comment"><a href="#Comment" class="headerlink" title="Comment"></a>Comment</h3><p>This is a paper that adopts an existing idea (learned index) in the KV Store and solves the problem of too much memory consumption in client side. I haven’t read the learned index paper and not sure where was that idea originally used (maybe database?). It’s a good adoption and well executed paper. </p>
+<h3 id="Comment"><a href="#Comment" class="headerlink" title="Comment"></a>Comment</h3><p>This paper is very similar to the previous one. Both are adopting learned index in KV Stores. The difference is with different KV Store implementation (<code>B+ Tree</code> vs <code>LSM-Tree</code>) and different motivation (save client caching size vs improve the lookup time). Somehow these two papers could combine to strategically learn model when needed (this paper) and send to client to reduce the model update overhead (previous paper).</p>
 
         </div>
 
@@ -294,9 +292,11 @@
                 <span class="tag">
                     
                     
-                    <a href="/tag/kvstore/"># kvstore</a>
-                    
                     <a href="/tag/OSDI20/"># OSDI20</a>
+                    
+                    <a href="/tag/index/"># index</a>
+                    
+                    <a href="/tag/storage/"># storage</a>
                     
                     
                 </span>
@@ -309,10 +309,8 @@
         </section>
         <section class="post-nav">
             
-            <a class="prev" rel="prev" href="/2021/02/19/paper2/">From WiscKey to Bourbon: A Learned Index for Log-Structured Merge Trees</a>
             
-            
-            <a class="next" rel="next" href="/2020/04/29/hello-world/">Hexo CSS Style Problem</a>
+            <a class="next" rel="next" href="/2021/02/11/paper1-1/">Fast RDMA-Based Ordered Key-Value Store Using Remote Learned Cache</a>
             
         </section>
 
