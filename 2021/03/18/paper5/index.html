@@ -16,7 +16,7 @@
     <meta name="keywords" content="luna, xu, computer science, research">
 
 
-<title>A Large Scale Analysis of Hundreds of In-Memory Cache Clusters at Twitter | Luna Xu&#39;s Website</title>
+<title>CrossFS: A Cross-Layered Direct-Access File System | Luna Xu&#39;s Website</title>
 
 
 
@@ -183,7 +183,7 @@
     
     <article class="post-wrap">
         <header class="post-header">
-            <h1 class="post-title">A Large Scale Analysis of Hundreds of In-Memory Cache Clusters at Twitter</h1>
+            <h1 class="post-title">CrossFS: A Cross-Layered Direct-Access File System</h1>
             
             <div class="post-meta">
                 
@@ -193,60 +193,66 @@
                 
                 <span class="post-time">
                     Date: <a
-                        href="#">March 6, 2021&nbsp;&nbsp;22:47:38</a>
+                        href="#">March 18, 2021&nbsp;&nbsp;11:58:34</a>
                 </span>
                 
+                
+                <span class="post-category">
+                    Category:
+                    
+                    <a href="/category/paper/">paper</a>
+                    
+                </span>
                 
             </div>
             
         </header>
 
         <div class="post-content">
-            <p>Back from FAST, this week I’m continuing my OSDI’20 series. I couldn’t update this week at my usual times as I have been crazy with meetings the whole week. Friday I only had 30 mins break the whole day while the rest is filled with meetings so I’m updating our weekly paper reading now on Saturady. I do understand why the morning paper discontinued and I actually do have the fear that this one won’t last long either… Anyways, today we will look at a less technical paper but I think would be valueable to researchers. Let’s look at the analysis of a large scale in-memory cache at Twitter.</p>
-<h3 id="How-are-in-memory-caches-deployed-at-Twitter"><a href="#How-are-in-memory-caches-deployed-at-Twitter" class="headerlink" title="How are in-memory caches deployed at Twitter?"></a>How are in-memory caches deployed at Twitter?</h3><ul>
-<li>One service one cache clsuter (100s clusters in total)</li>
-<li>A cache cluster is composed by containers</li>
-<li>In total they serve billions QPS and consume 100s TB DRAM</li>
-<li>Method<ul>
-<li>Week-long traces from one instance of each cluster (<a href="https://github.com/twitter/cache-trace" target="_blank" rel="noopener">open sourced</a>)<ul>
-<li>700 billion requests, 80 TB in size</li>
+            <p>Recently I have been working very tightly with computational storage. It has been a topic for a decade since <a href="https://swanson.ucsd.edu/data/bib/pdfs/OSDI2014-Willow.pdf" target="_blank" rel="noopener">Willow</a> in OSDI’14. However, until recently the industry decided to manufacture products. Now we see “Smart SSDs” packed with FPGA, CPU, or even GPUs. This paper is a little coincidence. I didn’t expect it to be anything related but it came to be a surprise that it is slightly related. This also leads me thinking about the literature searching. Usually you don’t get papers like this if you search “computational storage” as it’s not mentioned in either the title or abstract. How do we improve this process? Going back to the paper, CrossFS is able to unify user-space, kernel-space, and firmware FS and utilize all the advantages provided.</p>
+<h3 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h3><img src="1.jpg" width="300 em" alt="current FS call stack" title="FS is bottlenecked by call stack and CPU" style="float: right">
+
+<ul>
+<li>File systems has high kernel call system overhead. Host would do all work, which places a burden on host CPU and not leveraging device compute power. Inode-based locks are not scalable.</li>
+<li>Device now is entering nano-second era, so the CPU latency (call stack, system call, locks) becomes very obivous.</li>
+<li>Workload I/O pattern: small random I/Os sharing same file.</li>
+</ul>
+<img src="2.jpg" width="300 em" alt="current types of FS" title="Three types of FS" style="float: right">
+
+<ul>
+<li>Three types of FS: Kernel, User, and Firmware</li>
+</ul>
+<img src="3.jpg" width="300 em" alt="FS pros and cons" title="FS pros and cons" style="float: left">
+
+<ul>
+<li>Lock limitaiton: Same file as the same inode, and even if two threads are accessing different offsets, they need to grab the same lock. </li>
+</ul>
+<h3 id="Design"><a href="#Design" class="headerlink" title="Design"></a>Design</h3><ul>
+<li>CrossFS has all three components: kernel, user, and firmware. <ul>
+<li>User FS will translate I/O requests to I/O queue.</li>
+<li>Firmware FS will fetch requests from I/O queue and perform I/O. </li>
+<li>Kernel FS is minimized and only called when needed (mount, setup DMA region, etc).</li>
 </ul>
 </li>
-<li>Focus on 54 clsuters in this paper</li>
+<li>Fine-grained lock mechanism. Use <code>fd</code> instead of inode for locking. Different <code>fd</code>s will go to different queue (<code>FD-Queue</code>). <ul>
+<li>Using a tree data structure to resolve overlapping. Each inode will have a tree. Each node in the tree has a <code>[lower, upper]</code> range of the offset. If two writes ends up in the same offset range, they will go into the same <code>FD-Queue</code> and in the end, only one request is served.</li>
+<li>My question here is each inode one tree, and one should lock the tree to do any tree updates. Then CrossFS wouldn’t perform if there are a lot of overlapping requests, although the paper claims that the lock is short compared to locking until I/O finishes. Also the tree only tracks the offset. What about the length? How to handle partial overlapping with different offsets?</li>
 </ul>
 </li>
-</ul>
-<h3 id="How-are-cache-clusters-used"><a href="#How-are-cache-clusters-used" class="headerlink" title="How are cache clusters used?"></a>How are cache clusters used?</h3><ul>
-<li>Use cases<img src="use-case.jpg" width="300 em" alt="Use cases" title="Distribution of use cases" style="float: right">
-- Caching for storage (KVStore)
-- Caching for computation
-- Intermediate data no persistency</li>
-<li>Workloads<ul>
-<li>35% of clusters are write-heavy with more than 30% writes (challenges: scalability, tail latency)</li>
-<li>Object sizes are small<ul>
-<li>24% cluster mean object size &lt; 100 bytes</li>
-<li>Median: 230 bytes</li>
-<li>Key size is large, Value/key size is small: 15% value size &lt;= key size; 50% value size &lt;= 5x key size (key compression)</li>
-<li>Sizes are changing as time goes by, and it can be very sudden with no pattern</li>
+<li>Firmware I/O scheduler. You can imaging with this new <code>FD-Queue</code> concurrency model, there will be a lot of queues there. Scheduling becomes important.<ul>
+<li>Round-robin policy: can delay blocking requests.</li>
+<li>Urgent-aware scheduling: prioritize blocking requests, reduce starvation.</li>
 </ul>
 </li>
-<li>Metadata size is large: 56 bytes per object</li>
+<li>Crash consistency design</li>
 </ul>
-</li>
+<h3 id="Evalution"><a href="#Evalution" class="headerlink" title="Evalution"></a>Evalution</h3><p>They don’t have any real computational storage so they can only reduce host CPU frequency to mimic a low-compute firmware. </p>
+<ul>
+<li>CrossFS scales with # of threads compare to others mentioned in the figures above (3x).</li>
+<li>Locking deisgn seems contributing the most to the performance gain.</li>
+<li>RocksDB test show 2x performance gain with more threads.</li>
 </ul>
-<h3 id="How-long-before-objects-expire-Time-to-live-TTL"><a href="#How-long-before-objects-expire-Time-to-live-TTL" class="headerlink" title="How long before objects expire? Time-to-live (TTL)"></a>How long before objects expire? Time-to-live (TTL)</h3><ul>
-<li>Objects are set to expire because of inconsistency, result update (refresh), etc.</li>
-<li>TTLs are usually short: &lt; 20 mins, only 25% TTLs are &gt; 2 days</li>
-<li>Bounded working set size (3-6GB) -&gt; No need for huge cache size</li>
-<li>The paper mentions multiple TTL methods and all are inefficient</li>
-</ul>
-<h3 id="Other-statistics"><a href="#Other-statistics" class="headerlink" title="Other statistics"></a>Other statistics</h3><ul>
-<li>Small cache miss and variations</li>
-<li>Request spikes are not always caused by hot keys</li>
-<li>Most are zipfian with large alpha with small deviations</li>
-<li>Cache policy is workload denpendent and FIFO performs similar to LRU</li>
-</ul>
-<h3 id="Comment"><a href="#Comment" class="headerlink" title="Comment"></a>Comment</h3><p>This is another no innovation but high value paper. I would definately read again carefully and come back with more notes as I found more interesting things to log. The trace may be useful for my own future papers as well. </p>
+<h3 id="Comment"><a href="#Comment" class="headerlink" title="Comment"></a>Comment</h3><p>The paper is slightly related to computational storage but with the focus on fine-grained locking mechanism. I like the paper the same reason I like the other good papers. If finds a very small but good angle to cut in with a big topic. The original idea is just use all components avaialble and unify all the FS solutions out there (user, kernel, firmware), but they found that not so much performance boost as they expected, then maybe they did some digging and found out the problem is inode locking. Then it spent a lot of time on the locking mechanism design and their experiments are also around it. However, they don’t want to abandon the orignal idea of crossFS, so here it is. Actually I wonder if you don’t use crossFS and just implement the locking design to any FS, how will it perform? The paper does have the breakdown, and maybe the performance gain is not huge enough for the authors to give up the crossFS idea. Obviously, crossFS could further make the improvement larger with all the kernel-bypassing and device-offloading. The thinking left with me is how do I found such a small angle/problem to cut in?</p>
 
         </div>
 
@@ -272,7 +278,7 @@
                     
                     <a href="/tag/OSDI20/"># OSDI20</a>
                     
-                    <a href="/tag/storage/"># storage</a>
+                    <a href="/tag/computational-storage/"># computational storage</a>
                     
                     
                 </span>
@@ -285,10 +291,8 @@
         </section>
         <section class="post-nav">
             
-            <a class="prev" rel="prev" href="/2021/03/18/paper5/">CrossFS: A Cross-Layered Direct-Access File System</a>
             
-            
-            <a class="next" rel="next" href="/2021/02/26/paper3/">DNA Data Storage and Near-Molecule Processing for the Yottabyte Era</a>
+            <a class="next" rel="next" href="/2021/03/06/paper4/">A Large Scale Analysis of Hundreds of In-Memory Cache Clusters at Twitter</a>
             
         </section>
 
