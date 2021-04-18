@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="Luna Xu">
+
+
+
+    <meta name="description" content="Luna Xu is a Computer Science researcher">
+
+
+    <meta name="keywords" content="luna, xu, computer science, research">
+
+
+<title>Generalized Sub-Query Fusion for Eliminating Redundant I/O From Big-Data Queries | Luna Xu&#39;s Website</title>
+
+
+
+    <link rel="icon" href="/moon.png">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <link rel="stylesheet" href="/css/custom.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">Luna Xu (Yamada)</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/publication">Publications</a>
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">Luna Xu (Yamada)</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/publication">Publications</a>
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+    <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">Generalized Sub-Query Fusion for Eliminating Redundant I/O From Big-Data Queries</h1>
+            
+            <div class="post-meta">
+                
+                Author: <a itemprop="author" rel="author" href="/">Luna Xu</a>
+                
+
+                
+                <span class="post-time">
+                    Date: <a
+                        href="#">April 18, 2021&nbsp;&nbsp;16:28:22</a>
+                </span>
+                
+                
+                <span class="post-category">
+                    Category:
+                    
+                    <a href="/category/paper/">paper</a>
+                    
+                </span>
+                
+            </div>
+            
+        </header>
+
+        <div class="post-content">
+            <p>It’s been a long time for me to visit MapReduce related papers although this was my main game back in PhD study. Since my graduation, my focus has been shifted to storage with my job. As a result, a lot of papers presented here are storage related. This is also one of the reasons I started reading papers as I know too little about storage research. However, I have been still reviewing a lot papers in journals about MapReduce, Big Data and Spark. This is a nice surprise that people still care about MR enough to still perform research around and be able to publish in top conferences with this topic in 2020. Today’s paper is one example. It’s a query plan optimizer called Resin for improving MR job performance on Big Data queries. Let’s jump right into it.</p>
+<h3 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h3><ul>
+<li>Big data query is usually translated into MR jobs for scalable processing. This procedure is called <strong>Query Compilation (QC)</strong>. </li>
+<li>Existing QC tools generate too many stages that require a lot of shuffle operations, which causes a big network I/O overhead that blocks the MR job performance.</li>
+</ul>
+<p><img src="tpcds-motivation.jpg" alt="TPCDS analysis"></p>
+<ul>
+<li>The reason that it generates so many stages is that the QC generates plan that causes a lot of data re-scanning.<ul>
+<li>TPCDS benchmark on Spark shows 40% queries have redundant I/O.</li>
+<li>16% of all queries, High-impact spend at least 50% time on stages with redundant I/O.</li>
+</ul>
+</li>
+</ul>
+<h3 id="Design-Resin"><a href="#Design-Resin" class="headerlink" title="Design (Resin)"></a>Design (Resin)</h3><ul>
+<li>Resin considers both SQL and MR together during QC with subquery fusion and binary elimination. Goal is simply producing less stages.<ul>
+<li>Subquery fusion: combine different queries into one with ResinMap and ResinReduce to reduce the number of stages.</li>
+<li>Binary elimination: using fusion to eliminate SQL operations like <code>join</code> and <code>union</code>. </li>
+</ul>
+</li>
+<li>ResinMap: allow multiple queries in one map operator<ul>
+<li>ex: join query with T1 and T2 will cause only one scan due to querying both T1 and T2 in one map phase.</li>
+</ul>
+</li>
+</ul>
+<p><img src="resinmap.jpg" alt="ResinMap Example"></p>
+<ul>
+<li>ResinReduce: combine filter conditions into one condition for only one pass<ul>
+<li>ex: join query with C1: id &gt; x and C2: id &lt; y, to a single condition C: x &lt; id &gt; y.</li>
+</ul>
+</li>
+</ul>
+<p><img src="resinreduce.jpg" alt="ResinReduce Example"></p>
+<h3 id="Evaluation"><a href="#Evaluation" class="headerlink" title="Evaluation"></a>Evaluation</h3><ul>
+<li>Method:<ul>
+<li>TPCDS 1TB and 10TB data sizes.</li>
+<li>40/140 queries with redundant I/O are used. </li>
+</ul>
+</li>
+<li>Results:<ul>
+<li>1.1-6X speed up.</li>
+<li>Reduced Disk I/O activity size, while memory usage is the same (implies that the data is reduced, disk I/O is not reduced because data are cached in DRAM). </li>
+</ul>
+</li>
+</ul>
+<h3 id="Comment"><a href="#Comment" class="headerlink" title="Comment"></a>Comment</h3><p>I like this kinds of papers as they are so simple. It seems it didn’t take them awful times to publish in a top-tier conference. The idea is simple: since we see a lot of shuffles in SQL queries like <code>join</code> and <code>union</code>, how about we do multiple operations in a single map and reduce phase to reduce the shuffle? Simple as that, and it works. I guess the good point is they picked a not so hot area (as of now), and found a very good problem to tackle. I just like the whole thing is simple and effective, which is quite the opposite of the <a href="../_posts/paper5.md">last paper CrossFS</a> with a lot of implementation and brownie design points that seems driving them crazy for publishing to this conference. </p>
+
+        </div>
+
+        
+        <section class="post-copyright">
+            
+            <p class="copyright-item">
+                <span>Author:</span>
+                <span>Luna Xu</span>
+            </p>
+            
+            
+            
+            
+
+        </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                    <a href="/tag/OSDI20/"># OSDI20</a>
+                    
+                    <a href="/tag/Spark/"># Spark</a>
+                    
+                    <a href="/tag/SQL/"># SQL</a>
+                    
+                    
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+            
+            <a class="next" rel="next" href="/2021/03/18/paper5/">CrossFS: A Cross-Layered Direct-Access File System</a>
+            
+        </section>
+
+
+    </article>
+</div>
+        </div>
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<footer id="footer" class="footer">
+    <div class="copyright">
+   <span>© Luna Xu | Total visitors: <span id="busuanzi_value_site_uv"></span></span>
+    </div>
+    <!--
+    <span id="busuanzi_container_site_uv"> Visitors: <span id="busuanzi_value_site_uv"></span> Cuties</span>
+        <span>© Luna Xu | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+-->
+</footer>
+
+    </div>
+</body>
+</html>

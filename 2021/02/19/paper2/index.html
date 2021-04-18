@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="Luna Xu">
+
+
+
+    <meta name="description" content="Luna Xu is a Computer Science researcher">
+
+
+    <meta name="keywords" content="luna, xu, computer science, research">
+
+
+<title>From WiscKey to Bourbon: A Learned Index for Log-Structured Merge Trees | Luna Xu&#39;s Website</title>
+
+
+
+    <link rel="icon" href="/moon.png">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <link rel="stylesheet" href="/css/custom.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">Luna Xu (Yamada)</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/publication">Publications</a>
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">Luna Xu (Yamada)</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/publication">Publications</a>
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+    <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">From WiscKey to Bourbon: A Learned Index for Log-Structured Merge Trees</h1>
+            
+            <div class="post-meta">
+                
+                Author: <a itemprop="author" rel="author" href="/">Luna Xu</a>
+                
+
+                
+                <span class="post-time">
+                    Date: <a
+                        href="#">February 19, 2021&nbsp;&nbsp;12:03:15</a>
+                </span>
+                
+                
+                <span class="post-category">
+                    Category:
+                    
+                    <a href="/category/paper/">paper</a>
+                    
+                </span>
+                
+            </div>
+            
+        </header>
+
+        <div class="post-content">
+            <p>This week we look at yet another paper about learned index. This paper also appears in OSDI’20. It is not the first time I see conferences accept multiple papers that have relevant contents. I am curious if the decision of accepting a paper is relevant to the topic of it other than purely the quality, a similar thing to diversity. Do conferences take care of topic diversity or the papers are solely judged by the quality of it. Somebody could do an analysis of acceptance rate by topic for each conference each year (maybe using NLP techniques to understand the content of a paper). Coming back to the paper, it is a work from Remzi’s group in U of Wisconsin - Madison. Different from the <a href="https://xuluna.github.io/2021/02/11/paper1-1/">paper last week</a>, this one focuses on the implementation in LevelDB with <code>LSM-Tree</code> as opposed to <code>B+ Tree</code> before.</p>
+<h3 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h3><ul>
+<li>Learned Index<ul>
+<li>Data lookup performance (latency) is sensitive in very large data sets.</li>
+<li><code>B-Tree</code> is a index data structure that records the position of a piece of data in a (partially) sorted array. </li>
+<li>Learned index use ML to map <code>Key=position</code> (<a href="https://www.cl.cam.ac.uk/~ey204/teaching/ACS/R244_2018_2019/papers/Kraska_SIGMOD_2018.pdf" target="_blank" rel="noopener">learned index</a>). The original model is LR <code>f(x)=ax+b</code> (yes only 2 weights).</li>
+</ul>
+</li>
+<li>Problem 1: Model needs to be retrained upon data writes.</li>
+<li>Problem 2: How to integrate this into production system (not sorted array but complex tree data structures).</li>
+</ul>
+<h3 id="Design-Bourbon"><a href="#Design-Bourbon" class="headerlink" title="Design (Bourbon)"></a>Design (Bourbon)</h3><!--  <img src="/2021/02/19/paper2/leveldb.jpg" class="" title="LevelDB uses LSM-Tree"> -->
+<img src="leveldb.jpg" width="300 em" alt="LevelDB uses LSM-Tree" title="LevelDB uses LSM-Tree" style="float: right">
+
+
+<ul>
+<li>A learned index for <code>LSM-Tree</code><ul>
+<li>Why <code>LSM-Tree</code>? Immutable SSTables</li>
+<li>LevelDB uses <code>LSM-Tree</code>. There’s no updates to SSTables. They only get deleted during compaction. They are always compacted/merged to the next level if the previous level is filled. The model needs to be retrained when a level data is changed &lt;-&gt; retrain at every data writes.</li>
+</ul>
+</li>
+<li>How and when to learn the SSTables<ul>
+<li>Lower-level tables live longer (less frequently we need to retrain the model)</li>
+<li>Higher-level tables are more valuable because they are the ones that are frequently queried</li>
+<li>Guildline: <ul>
+<li>Prefer to model lower-level tables, and wait some time for the tables to be stable</li>
+<li>Also learn higher-level tables, and workload/data-aware technique is needed</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="https://mine.kaust.edu.sa/Documents/papers/VLDBJ_2014_Maximum_error-bounded_Piecewise_Linear_Representation_for_online_stream_approximation.pdf" target="_blank" rel="noopener">Greedy Piecewise Linear Regression</a> @VLDB’14<ul>
+<li>Bourbon uses this algorithm which is basically multiple linear segments to predict the position within an error bound</li>
+<li>(bad point) Not so sure why they use this method instead of simple LR</li>
+</ul>
+</li>
+<li>WiscKey<ul>
+<li>A previous work that seperates Key and Value to reduce the <code>LSM-Tree</code> size</li>
+<li>Each node in the <code>LSM-Tree</code> is <code>(Key, value_addr)</code></li>
+<li>Lookup time: 4us</li>
+<li>Burbon reduces time to 2-3us (<code>LSM-Tree</code> lookup times)</li>
+</ul>
+</li>
+<li>Runtime analysis on trade-offs<ul>
+<li>Learn (CPU cost) vs No-learn (Lookup cost)</li>
+<li>CPU cost is estimated by the table size (larger table has more datapoints to learn)</li>
+<li>Lookup cost is estimated by baseline lookup time vs model lookup time multiply by how many lookups served (history data monitored)</li>
+<li>If write-intensive, No-learn is better (model change all the time -&gt; learning cost is high, less lookups -&gt; no benefit)</li>
+<li>If read-intensive, Learn is better</li>
+</ul>
+</li>
+</ul>
+<h3 id="Evaluation"><a href="#Evaluation" class="headerlink" title="Evaluation"></a>Evaluation</h3><ul>
+<li>All experiments are comparing WiscKey vs Bourbon</li>
+<li>Microbenchmark: 100% Uniform reads on different datasets</li>
+<li>Microbenchmark: 100% read with different distributions (Uniform, seq, Zipfian, etc.)</li>
+<li>Macrobenchmark: YCSB</li>
+<li>(bad point) There is no comparison between different models (accuracy and speed) -&gt; why use Greedy PLR vs LR?</li>
+</ul>
+<h3 id="Comment"><a href="#Comment" class="headerlink" title="Comment"></a>Comment</h3><p>This paper is very similar to the previous one. Both are adopting learned index in KV Stores. The difference is with different KV Store implementation (<code>B+ Tree</code> vs <code>LSM-Tree</code>) and different motivation (save client caching size vs improve the lookup time). Somehow these two papers could combine to strategically learn model when needed (this paper) and send to client to reduce the model update overhead (previous paper).</p>
+
+        </div>
+
+        
+        <section class="post-copyright">
+            
+            <p class="copyright-item">
+                <span>Author:</span>
+                <span>Luna Xu</span>
+            </p>
+            
+            
+            
+            
+
+        </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                    <a href="/tag/OSDI20/"># OSDI20</a>
+                    
+                    <a href="/tag/storage/"># storage</a>
+                    
+                    <a href="/tag/index/"># index</a>
+                    
+                    
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+            <a class="prev" rel="prev" href="/2021/02/26/paper3/">DNA Data Storage and Near-Molecule Processing for the Yottabyte Era</a>
+            
+            
+            <a class="next" rel="next" href="/2021/02/11/paper1-1/">Fast RDMA-Based Ordered Key-Value Store Using Remote Learned Cache</a>
+            
+        </section>
+
+
+    </article>
+</div>
+        </div>
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<footer id="footer" class="footer">
+    <div class="copyright">
+   <span>© Luna Xu | Total visitors: <span id="busuanzi_value_site_uv"></span></span>
+    </div>
+    <!--
+    <span id="busuanzi_container_site_uv"> Visitors: <span id="busuanzi_value_site_uv"></span> Cuties</span>
+        <span>© Luna Xu | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+-->
+</footer>
+
+    </div>
+</body>
+</html>

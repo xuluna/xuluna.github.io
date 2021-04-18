@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="Luna Xu">
+
+
+
+    <meta name="description" content="Luna Xu is a Computer Science researcher">
+
+
+    <meta name="keywords" content="luna, xu, computer science, research">
+
+
+<title>DNA Data Storage and Near-Molecule Processing for the Yottabyte Era | Luna Xu&#39;s Website</title>
+
+
+
+    <link rel="icon" href="/moon.png">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <link rel="stylesheet" href="/css/custom.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">Luna Xu (Yamada)</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/publication">Publications</a>
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">Luna Xu (Yamada)</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/publication">Publications</a>
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">DNA Data Storage and Near-Molecule Processing for the Yottabyte Era</h1>
+            
+            <div class="post-meta">
+                
+                Author: <a itemprop="author" rel="author" href="/">Luna Xu</a>
+                
+
+                
+                <span class="post-time">
+                    Date: <a
+                        href="#">February 26, 2021&nbsp;&nbsp;13:47:48</a>
+                </span>
+                
+                
+                <span class="post-category">
+                    Category:
+                    
+                    <a href="/category/paper/">paper</a>
+                    
+                </span>
+                
+            </div>
+            
+        </header>
+
+        <div class="post-content">
+            <p>This week I am attending FAST’21 virtually. I see a lot of work about persistent memory. It is just a little bit surprising to see a lot of work around persistent memory after NVM has been explored in past decades before the device is in production. That saying a new technology can create papers decades before it’s coming out and decades(?) after. Almost all virtual conferences would play a pre-recorded video as presentation instead of a realtime person presenting like a normal online meeting. I guess the reason is to avoid network interruption in the middle and supposedly the video recording provides the speakers with the opportunity of better quality presentations. However, in reality, I don’t think I see better quality presentations maybe it’s just me. As one of the organizers of <a href="https://www.hotstorage.org/2021/" target="_blank" rel="noopener">HotStorage’21</a>, these details distract me from focusing on papers during these events. Supposedly today I should introduce a FAST’21 paper but I’ve been spending too much time watching these presentations and I think “zoom fatigue” is real. I was hoping I would be attracted by at least one paper but instead I was attracted by a <a href="https://www.usenix.org/conference/fast21/presentation/keynote-ceze-strauss" target="_blank" rel="noopener">Keynote</a> that is not so relevant to practical storage. Usenix still didn’t post the slides/video or any materials about this talk so this would be purely from my memory and non-technical mostly because human brain mostly remember only the wow-factors and emotion feelings rather than objective facts or technical details.</p>
+<p>I was not able to attend end-to-end, so I will just mention the things I heard and impresses me. So the idea is to store data by synthesizing DNA strands. Each bit would have 4 status (AGCT) so you would image a 4-bit world, thus requiring less capacity to store more information. The second thing is you can preserve a lot of DNA strands in a single “soup” (it’s not something I invented but actually used by the presenter). Actually the idea is not new and I heard about it at least 2 years ago. What surprises me is that people are actually continuing the work (not just theory) and many results have been achieved, including many papers! There’s even a <a href="http://www.dna-computing.org/" target="_blank" rel="noopener">conference</a> solely for it. My experience in industry research is that companies are very hesitant to fund projects that show no near-future profits. It’s very surprising that people do actually get funding to do these kinds of things. Actually the work presented is in collaboration with Microsoft so not solely burning tax-payers’ money. So right now they already built the platform (which they call wetware) for data reading (maybe writing) programmably with some robot arms. This is already quite impressive, but the highlight of the talk is not data read/write, but more about computing. When I first heard about the idea, it was limited to storage domain because of the benefits of high density, durability, retention, etc., which storage people care. This time actually they introduce the concept of DNA-computing by showing a use case of image similarity search. It’s interesting as it utilizes the DNA helix strand paring features to perform the compute. So they have a soup of image single strand DNAs, and also a query strand. The query strand would have a little magnetite head. Then they put these query strands into the soup (data lake/soup) and mix. The two strands would match themselves and pair and becomes a helix double strand. Then you use another magnetite to retrieve all the paired double strands, and there you go, you just find all the images that matches your query. It indeed is a computing, and without electricity! This is impressive. Interesting thing is he mentioned that near-data computing now is very hot topic, but nothing is as close to data physically touching each other and compute is done. In the end, they say DNA-computing and Quantum computing are new forms of computers.</p>
+<p>I couldn’t put any fancy photos or any performance data here as I was hoping the materials would be online soon. Please keep track of usenix website for the cool stuff. Next week, we would resume our paper reading.</p>
+
+        </div>
+
+        
+        <section class="post-copyright">
+            
+            <p class="copyright-item">
+                <span>Author:</span>
+                <span>Luna Xu</span>
+            </p>
+            
+            
+            
+            
+
+        </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                    <a href="/tag/FAST21/"># FAST21</a>
+                    
+                    <a href="/tag/storage/"># storage</a>
+                    
+                    
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+            <a class="prev" rel="prev" href="/2021/03/06/paper4/">A Large Scale Analysis of Hundreds of In-Memory Cache Clusters at Twitter</a>
+            
+            
+            <a class="next" rel="next" href="/2021/02/19/paper2/">From WiscKey to Bourbon: A Learned Index for Log-Structured Merge Trees</a>
+            
+        </section>
+
+
+    </article>
+</div>
+        </div>
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<footer id="footer" class="footer">
+    <div class="copyright">
+   <span>© Luna Xu | Total visitors: <span id="busuanzi_value_site_uv"></span></span>
+    </div>
+    <!--
+    <span id="busuanzi_container_site_uv"> Visitors: <span id="busuanzi_value_site_uv"></span> Cuties</span>
+        <span>© Luna Xu | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+-->
+</footer>
+
+    </div>
+</body>
+</html>
