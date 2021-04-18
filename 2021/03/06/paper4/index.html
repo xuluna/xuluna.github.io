@@ -202,9 +202,9 @@
         </header>
 
         <div class="post-content">
-            <p>Back from FAST, this week I’m continuing my OSDI’20 series. I couldn’t update this week at my usual times as I have been crazy with meetings the whole week. Friday I only had 30 mins break the whole day while the rest is filled with meetings so I’m updating our weekly paper reading now on Saturady. I do understand why the morning paper discontinued and I actually do have the fear that this one won’t last long either… Anyways, today we will look at a less technical paper but I think would be valueable to researchers. Let’s look at the analysis of a large scale in-memory cache at Twitter.</p>
+            <p>Back from FAST, this week I’m continuing my OSDI’20 series. I couldn’t update this week at my usual times as I have been crazy with meetings the whole week. Friday I only had 30 mins break the whole day while the rest is filled with meetings so I’m updating our weekly paper reading now on Saturday. I do understand why the morning paper discontinued and I actually do have the fear that this one won’t last long either… Anyways, today we will look at a less technical paper but I think would be valuable to researchers. Let’s look at the analysis of a large scale in-memory cache at Twitter.</p>
 <h3 id="How-are-in-memory-caches-deployed-at-Twitter"><a href="#How-are-in-memory-caches-deployed-at-Twitter" class="headerlink" title="How are in-memory caches deployed at Twitter?"></a>How are in-memory caches deployed at Twitter?</h3><ul>
-<li>One service one cache clsuter (100s clusters in total)</li>
+<li>One service one cache cluster (100s clusters in total)</li>
 <li>A cache cluster is composed by containers</li>
 <li>In total they serve billions QPS and consume 100s TB DRAM</li>
 <li>Method<ul>
@@ -212,7 +212,7 @@
 <li>700 billion requests, 80 TB in size</li>
 </ul>
 </li>
-<li>Focus on 54 clsuters in this paper</li>
+<li>Focus on 54 clusters in this paper</li>
 </ul>
 </li>
 </ul>
@@ -244,9 +244,9 @@
 <li>Small cache miss and variations</li>
 <li>Request spikes are not always caused by hot keys</li>
 <li>Most are zipfian with large alpha with small deviations</li>
-<li>Cache policy is workload denpendent and FIFO performs similar to LRU</li>
+<li>Cache policy is workload dependent and FIFO performs similar to LRU</li>
 </ul>
-<h3 id="Comment"><a href="#Comment" class="headerlink" title="Comment"></a>Comment</h3><p>This is another no innovation but high value paper. I would definately read again carefully and come back with more notes as I found more interesting things to log. The trace may be useful for my own future papers as well. </p>
+<h3 id="Comment"><a href="#Comment" class="headerlink" title="Comment"></a>Comment</h3><p>This is another no innovation but high value paper. I would definitely read again carefully and come back with more notes as I found more interesting things to log. The trace may be useful for my own future papers as well. </p>
 
         </div>
 

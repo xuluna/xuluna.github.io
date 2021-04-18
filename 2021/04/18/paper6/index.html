@@ -16,7 +16,7 @@
     <meta name="keywords" content="luna, xu, computer science, research">
 
 
-<title>CrossFS: A Cross-Layered Direct-Access File System | Luna Xu&#39;s Website</title>
+<title>Generalized Sub-Query Fusion for Eliminating Redundant I/O From Big-Data Queries | Luna Xu&#39;s Website</title>
 
 
 
@@ -183,7 +183,7 @@
     
     <article class="post-wrap">
         <header class="post-header">
-            <h1 class="post-title">CrossFS: A Cross-Layered Direct-Access File System</h1>
+            <h1 class="post-title">Generalized Sub-Query Fusion for Eliminating Redundant I/O From Big-Data Queries</h1>
             
             <div class="post-meta">
                 
@@ -193,7 +193,7 @@
                 
                 <span class="post-time">
                     Date: <a
-                        href="#">March 18, 2021&nbsp;&nbsp;11:58:34</a>
+                        href="#">April 18, 2021&nbsp;&nbsp;16:28:22</a>
                 </span>
                 
                 
@@ -209,51 +209,51 @@
         </header>
 
         <div class="post-content">
-            <p>Recently I have been working very tightly with computational storage. It has been a topic for a decade since <a href="https://swanson.ucsd.edu/data/bib/pdfs/OSDI2014-Willow.pdf" target="_blank" rel="noopener">Willow</a> in OSDI’14. However, until recently the industry decided to manufacture products. Now we see “Smart SSDs” packed with FPGA, CPU, or even GPUs. This paper is a little coincidence. I didn’t expect it to be anything related but it came to be a surprise that it is slightly related. This also leads me thinking about the literature searching. Usually you don’t get papers like this if you search “computational storage” as it’s not mentioned in either the title or abstract. How do we improve this process? Going back to the paper, CrossFS is able to unify user-space, kernel-space, and firmware FS and utilize all the advantages provided.</p>
-<h3 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h3><img src="1.jpg" width="300 em" alt="current FS call stack" title="FS is bottlenecked by call stack and CPU" style="float: right">
-
-<ul>
-<li>File systems has high kernel call system overhead. Host would do all work, which places a burden on host CPU and not leveraging device compute power. Inode-based locks are not scalable.</li>
-<li>Device now is entering nano-second era, so the CPU latency (call stack, system call, locks) becomes very obvious.</li>
-<li>Workload I/O pattern: small random I/Os sharing same file.</li>
+            <p>It’s been a long time for me to visit MapReduce related papers although this was my main game back in PhD study. Since my graduation, my focus has been shifted to storage with my job. As a result, a lot of papers presented here are storage related. This is also one of the reasons I started reading papers as I know too little about storage research. However, I have been still reviewing a lot papers in journals about MapReduce, Big Data and Spark. This is a nice surprise that people still care about MR enough to still perform research around and be able to publish in top conferences with this topic in 2020. Today’s paper is one example. It’s a query plan optimizer called Resin for improving MR job performance on Big Data queries. Let’s jump right into it.</p>
+<h3 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h3><ul>
+<li>Big data query is usually translated into MR jobs for scalable processing. This procedure is called <strong>Query Compilation (QC)</strong>. </li>
+<li>Existing QC tools generate too many stages that require a lot of shuffle operations, which causes a big network I/O overhead that blocks the MR job performance.</li>
 </ul>
+<p><img src="tpcds-motivation.jpg" alt="TPCDS analysis"></p>
 <ul>
-<li>Three types of FS: Kernel, User, and Firmware</li>
-</ul>
-<img src="2.jpg" width="400 em" alt="current types of FS" title="Three types of FS"> 
-
-<ul>
-<li>Lock limitaiton: Same file as the same inode, and even if two threads are accessing different offsets, they need to grab the same lock. </li>
-</ul>
-<img src="3.jpg" width="400 em" alt="FS pros and cons" title="FS pros and cons">
-
-
-<h3 id="Design"><a href="#Design" class="headerlink" title="Design"></a>Design</h3><ul>
-<li>CrossFS has all three components: kernel, user, and firmware. <ul>
-<li>User FS will translate I/O requests to I/O queue.</li>
-<li>Firmware FS will fetch requests from I/O queue and perform I/O. </li>
-<li>Kernel FS is minimized and only called when needed (mount, setup DMA region, etc).</li>
+<li>The reason that it generates so many stages is that the QC generates plan that causes a lot of data re-scanning.<ul>
+<li>TPCDS benchmark on Spark shows 40% queries have redundant I/O.</li>
+<li>16% of all queries, High-impact spend at least 50% time on stages with redundant I/O.</li>
 </ul>
 </li>
-<li>Fine-grained lock mechanism. Use <code>fd</code> instead of inode for locking. Different <code>fd</code>s will go to different queue (<code>FD-Queue</code>). <ul>
-<li>Using a tree data structure to resolve overlapping. Each inode will have a tree. Each node in the tree has a <code>[lower, upper]</code> range of the offset. If two writes ends up in the same offset range, they will go into the same <code>FD-Queue</code> and in the end, only one request is served.</li>
-<li>My question here is each inode one tree, and one should lock the tree to do any tree updates. Then CrossFS wouldn’t perform if there are a lot of overlapping requests, although the paper claims that the lock is short compared to locking until I/O finishes. Also the tree only tracks the offset. What about the length? How to handle partial overlapping with different offsets?</li>
+</ul>
+<h3 id="Design-Resin"><a href="#Design-Resin" class="headerlink" title="Design (Resin)"></a>Design (Resin)</h3><ul>
+<li>Resin considers both SQL and MR together during QC with subquery fusion and binary elimination. Goal is simply producing less stages.<ul>
+<li>Subquery fusion: combine different queries into one with ResinMap and ResinReduce to reduce the number of stages.</li>
+<li>Binary elimination: using fusion to eliminate SQL operations like <code>join</code> and <code>union</code>. </li>
 </ul>
 </li>
-<li>Firmware I/O scheduler. You can imaging with this new <code>FD-Queue</code> concurrency model, there will be a lot of queues there. Scheduling becomes important.<ul>
-<li>Round-robin policy: can delay blocking requests.</li>
-<li>Urgent-aware scheduling: prioritize blocking requests, reduce starvation.</li>
+<li>ResinMap: allow multiple queries in one map operator<ul>
+<li>ex: join query with T1 and T2 will cause only one scan due to querying both T1 and T2 in one map phase.</li>
 </ul>
 </li>
-<li>Crash consistency design</li>
 </ul>
-<h3 id="Evaluation"><a href="#Evaluation" class="headerlink" title="Evaluation"></a>Evaluation</h3><p>They don’t have any real computational storage so they can only reduce host CPU frequency to mimic a low-compute firmware. </p>
+<p><img src="resinmap.jpg" alt="ResinMap Example"></p>
 <ul>
-<li>CrossFS scales with # of threads compare to others mentioned in the figures above (3x).</li>
-<li>Locking design seems contributing the most to the performance gain.</li>
-<li>RocksDB test show 2x performance gain with more threads.</li>
+<li>ResinReduce: combine filter conditions into one condition for only one pass<ul>
+<li>ex: join query with C1: id &gt; x and C2: id &lt; y, to a single condition C: x &lt; id &gt; y.</li>
 </ul>
-<h3 id="Comment"><a href="#Comment" class="headerlink" title="Comment"></a>Comment</h3><p>The paper is slightly related to computational storage but with the focus on fine-grained locking mechanism. I like the paper the same reason I like the other good papers. If finds a very small but good angle to cut in with a big topic. The original idea is just use all components available and unify all the FS solutions out there (user, kernel, firmware), but they found that not so much performance boost as they expected, then maybe they did some digging and found out the problem is inode locking. Then it spent a lot of time on the locking mechanism design and their experiments are also around it. However, they don’t want to abandon the original idea of crossFS, so here it is. Actually I wonder if you don’t use crossFS and just implement the locking design to any FS, how will it perform? The paper does have the breakdown, and maybe the performance gain is not huge enough for the authors to give up the crossFS idea. Obviously, crossFS could further make the improvement larger with all the kernel-bypassing and device-offloading. The thinking left with me is how do I found such a small angle/problem to cut in?</p>
+</li>
+</ul>
+<p><img src="resinreduce.jpg" alt="ResinReduce Example"></p>
+<h3 id="Evaluation"><a href="#Evaluation" class="headerlink" title="Evaluation"></a>Evaluation</h3><ul>
+<li>Method:<ul>
+<li>TPCDS 1TB and 10TB data sizes.</li>
+<li>40/140 queries with redundant I/O are used. </li>
+</ul>
+</li>
+<li>Results:<ul>
+<li>1.1-6X speed up.</li>
+<li>Reduced Disk I/O activity size, while memory usage is the same (implies that the data is reduced, disk I/O is not reduced because data are cached in DRAM). </li>
+</ul>
+</li>
+</ul>
+<h3 id="Comment"><a href="#Comment" class="headerlink" title="Comment"></a>Comment</h3><p>I like this kinds of papers as they are so simple. It seems it didn’t take them awful times to publish in a top-tier conference. The idea is simple: since we see a lot of shuffles in SQL queries like <code>join</code> and <code>union</code>, how about we do multiple operations in a single map and reduce phase to reduce the shuffle? Simple as that, and it works. I guess the good point is they picked a not so hot area (as of now), and found a very good problem to tackle. I just like the whole thing is simple and effective, which is quite the opposite of the <a href="../_posts/paper5.md">last paper CrossFS</a> with a lot of implementation and brownie design points that seems driving them crazy for publishing to this conference. </p>
 
         </div>
 
@@ -279,7 +279,9 @@
                     
                     <a href="/tag/OSDI20/"># OSDI20</a>
                     
-                    <a href="/tag/computational-storage/"># computational storage</a>
+                    <a href="/tag/Spark/"># Spark</a>
+                    
+                    <a href="/tag/SQL/"># SQL</a>
                     
                     
                 </span>
@@ -292,10 +294,8 @@
         </section>
         <section class="post-nav">
             
-            <a class="prev" rel="prev" href="/2021/04/18/paper6/">Generalized Sub-Query Fusion for Eliminating Redundant I/O From Big-Data Queries</a>
             
-            
-            <a class="next" rel="next" href="/2021/03/06/paper4/">A Large Scale Analysis of Hundreds of In-Memory Cache Clusters at Twitter</a>
+            <a class="next" rel="next" href="/2021/03/18/paper5/">CrossFS: A Cross-Layered Direct-Access File System</a>
             
         </section>
 
