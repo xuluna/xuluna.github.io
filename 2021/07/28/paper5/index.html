@@ -16,7 +16,7 @@
     <meta name="keywords" content="luna, xu, computer science, research">
 
 
-<title>A Large Scale Analysis of Hundreds of In-Memory Cache Clusters at Twitter | Luna Xu&#39;s Website</title>
+<title>Semeru: A Memory-Disaggregated Managed Runtime | Luna Xu&#39;s Website</title>
 
 
 
@@ -183,7 +183,7 @@
     
     <article class="post-wrap">
         <header class="post-header">
-            <h1 class="post-title">A Large Scale Analysis of Hundreds of In-Memory Cache Clusters at Twitter</h1>
+            <h1 class="post-title">Semeru: A Memory-Disaggregated Managed Runtime</h1>
             
             <div class="post-meta">
                 
@@ -193,64 +193,56 @@
                 
                 <span class="post-time">
                     Date: <a
-                        href="#">March 6, 2021&nbsp;&nbsp;22:47:38</a>
+                        href="#">July 28, 2021&nbsp;&nbsp;18:36:20</a>
                 </span>
                 
+                
+                <span class="post-category">
+                    Category:
+                    
+                    <a href="/category/paper/">paper</a>
+                    
+                </span>
                 
             </div>
             
         </header>
 
         <div class="post-content">
-            <p>Back from FAST, this week I’m continuing my OSDI’20 series. I couldn’t update this week at my usual times as I have been crazy with meetings the whole week. Friday I only had 30 mins break the whole day while the rest is filled with meetings so I’m updating our weekly paper reading now on Saturady. I do understand why the morning paper discontinued and I actually do have the fear that this one won’t last long either… Anyways, today we will look at a less technical paper but I think would be valueable to researchers. Let’s look at the analysis of a large scale in-memory cache at Twitter.</p>
-<h3 id="How-are-in-memory-caches-deployed-at-Twitter"><a href="#How-are-in-memory-caches-deployed-at-Twitter" class="headerlink" title="How are in-memory caches deployed at Twitter?"></a>How are in-memory caches deployed at Twitter?</h3><ul>
-<li>One service one cache clsuter (100s clusters in total)</li>
-<li>A cache cluster is composed by containers</li>
-<li>In total they serve billions QPS and consume 100s TB DRAM</li>
-<li>Method<ul>
-<li>Week-long traces from one instance of each cluster (<a target="_blank" rel="noopener" href="https://github.com/twitter/cache-trace">open sourced</a>)<ul>
-<li>700 billion requests, 80 TB in size</li>
-</ul>
-</li>
-<li>Focus on 54 clsuters in this paper</li>
-</ul>
-</li>
-</ul>
-<h3 id="How-are-cache-clusters-used"><a href="#How-are-cache-clusters-used" class="headerlink" title="How are cache clusters used?"></a>How are cache clusters used?</h3><ul>
-<li>Use cases</li>
-</ul>
-<img src="use-case.jpg" width="300 em" alt="Use cases" title="Distribution of use cases" style="float: right">
+            <p>The paper series haven’t been updated for a long time. This is because a lot of changes I made recently to my life and was very busy for the last month. Now that everything is settled. Let’s continue the paper series. I attended OSDI/ATC 2021 last week and one <a target="_blank" rel="noopener" href="https://www.usenix.org/conference/atc21/presentation/taranov">paper</a> brought to my attention. The paper implemented the thing I was thinking about how to relax the memory pressure in Spark and seamlessly access remote JVM heap. But more interestingly in the Q&amp;A session the author mentioned a previous paper that took a step further of creating a distributed JVM which is our target this week. The paper might not be motivated to solve the same problem I have but certainly it could be used for my problem as well.</p>
+<h3 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h3><img src="motivation.png" width="300 em" alt="Baseline GC overhead" title="GC and Spark overhead with RDMA via NVMe-oF" style="float: right">
 
 <ul>
-<li>Caching for storage (KVStore)</li>
-<li>Caching for computation</li>
-<li>Intermediate data no persistency<ul>
-<li>Workloads</li>
+<li>Fast RDMA network and disaggregated data center structure.</li>
+<li><strong>No previous work cares about managed language</strong>.<ul>
+<li>Heap space remote access.</li>
+<li>How to handle GC. GC remote objects will block and slow down applications.</li>
+<li>Object-oriented data structures have random access pattern and highly sensitive to latency.</li>
 </ul>
 </li>
-<li>35% of clusters are write-heavy with more than 30% writes (challenges: scalability, tail latency)</li>
-<li>Object sizes are small<ul>
-<li>24% cluster mean object size &lt; 100 bytes</li>
-<li>Median: 230 bytes</li>
-<li>Key size is large, Value/key size is small: 15% value size &lt;= key size; 50% value size &lt;= 5x key size (key compression)</li>
-<li>Sizes are changing as time goes by, and it can be very sudden with no pattern</li>
+<li>Naive approach of <strong>NVMe-oF mounts remote memory as ramdisk</strong>. The paper evaluates with this approach (baseline). Seems like one can launch a JVM instance with remote memory with this approach?<ul>
+<li>Results show big overhead of GC</li>
 </ul>
 </li>
-<li>Metadata size is large: 56 bytes per object</li>
 </ul>
-<h3 id="How-long-before-objects-expire-Time-to-live-TTL"><a href="#How-long-before-objects-expire-Time-to-live-TTL" class="headerlink" title="How long before objects expire? Time-to-live (TTL)"></a>How long before objects expire? Time-to-live (TTL)</h3><ul>
-<li>Objects are set to expire because of inconsistency, result update (refresh), etc.</li>
-<li>TTLs are usually short: &lt; 20 mins, only 25% TTLs are &gt; 2 days</li>
-<li>Bounded working set size (3-6GB) -&gt; No need for huge cache size</li>
-<li>The paper mentions multiple TTL methods and all are inefficient</li>
+<h3 id="Design-Universal-Java-Heap"><a href="#Design-Universal-Java-Heap" class="headerlink" title="Design (Universal Java Heap)"></a>Design (Universal Java Heap)</h3><ul>
+<li>Separate the whole heap space to different memory servers and the CPU server just access heaps remotely.<ul>
+<li>CPU server keeps metadata and a local memory to cache active pages.</li>
+<li>Evicted pages go to remote memory server.</li>
 </ul>
-<h3 id="Other-statistics"><a href="#Other-statistics" class="headerlink" title="Other statistics"></a>Other statistics</h3><ul>
-<li>Small cache miss and variations</li>
-<li>Request spikes are not always caused by hot keys</li>
-<li>Most are zipfian with large alpha with small deviations</li>
-<li>Cache policy is workload denpendent and FIFO performs similar to LRU</li>
+</li>
+<li>Each object has the same virtual address on both the CPU server and memory servers.</li>
+<li>Offload GC to memory servers.<ul>
+<li>Tracing is offloaded to local memory server.</li>
 </ul>
-<h3 id="Comment"><a href="#Comment" class="headerlink" title="Comment"></a>Comment</h3><p>This is another no innovation but high value paper. I would definately read again carefully and come back with more notes as I found more interesting things to log. The trace may be useful for my own future papers as well. </p>
+</li>
+</ul>
+<h3 id="Evaluation"><a href="#Evaluation" class="headerlink" title="Evaluation"></a>Evaluation</h3><ul>
+<li>Implementation involves LJVM (OpenJDK 12.0.2) for memory server, JVM for CPU server and Linux kernel for paging and RDMA (NVMe-oF).</li>
+<li>Memory server tracing overhead is 13% utilization, and a single core can support 8 Spark applications.</li>
+<li>Spark apps: GraphX-CC, GraphX-PageRank, PageRank, TriangleCount, MLlib-Bayes with data size 2G on a 4 node cluster.</li>
+<li>Results shows that GC offload has 3.23x performance improvement.</li>
+</ul>
 
         </div>
 
@@ -276,7 +268,9 @@
                     
                     <a href="/tag/OSDI20/"># OSDI20</a>
                     
-                    <a href="/tag/storage/"># storage</a>
+                    <a href="/tag/Spark/"># Spark</a>
+                    
+                    <a href="/tag/JVM/"># JVM</a>
                     
                     
                 </span>
@@ -289,10 +283,8 @@
         </section>
         <section class="post-nav">
             
-            <a class="prev" rel="prev" href="/2021/07/28/paper5/">Semeru: A Memory-Disaggregated Managed Runtime</a>
             
-            
-            <a class="next" rel="next" href="/2021/02/26/paper3/">DNA Data Storage and Near-Molecule Processing for the Yottabyte Era</a>
+            <a class="next" rel="next" href="/2021/03/07/paper4/">A Large Scale Analysis of Hundreds of In-Memory Cache Clusters at Twitter</a>
             
         </section>
 
