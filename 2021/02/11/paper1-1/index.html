@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="Luna Xu">
+
+
+
+    <meta name="description" content="Luna Xu is a Computer Science researcher">
+
+
+    <meta name="keywords" content="luna, xu, computer science, research">
+
+
+<title>Fast RDMA-Based Ordered Key-Value Store Using Remote Learned Cache | Luna Xu&#39;s Website</title>
+
+
+
+    <link rel="icon" href="/moon.png">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <link rel="stylesheet" href="/css/custom.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">Luna Xu (Yamada)</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/publication">Publications</a>
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">Luna Xu (Yamada)</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/publication">Publications</a>
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+    <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">Fast RDMA-Based Ordered Key-Value Store Using Remote Learned Cache</h1>
+            
+            <div class="post-meta">
+                
+                Author: <a itemprop="author" rel="author" href="/">Luna Xu</a>
+                
+
+                
+                <span class="post-time">
+                    Date: <a
+                        href="#">February 11, 2021&nbsp;&nbsp;16:01:11</a>
+                </span>
+                
+                
+                <span class="post-category">
+                    Category:
+                    
+                    <a href="/category/paper/">paper</a>
+                    
+                </span>
+                
+            </div>
+            
+        </header>
+
+        <div class="post-content">
+            <p>This is the first paper of the paper reading series. I have been following <a target="_blank" rel="noopener" href="https://blog.acolyer.org">the morning paper</a> for a long time. Sadly in recent <a target="_blank" rel="noopener" href="https://blog.acolyer.org/2021/02/08/the-ants-and-the-pheromones/">post</a>, it is decided the morning paper is being paused and we don’t know when it will come back. Well I thought I would love to keep track of papers I am interested in so that later on I can come back and dig deeper with a specific interest. While waiting for the morning paper to come back (hopefully), I would start updating the papers here. The frequency would be one paper per week (hopefully), and in principal it will continue even after the morning paper is resumed for the purpose of personal anchor of papers of interests.</p>
+<p>This week’s paper is in OSDI’20 from Haibo Chen’s group in Jiaotong University. Yet another Key-Value Store paper, but uses Machine Learning techniques to reduce the caching size.</p>
+<h3 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h3><img src="/2021/02/11/paper1-1/1.jpg" class="" title="Trade-offs">
+
+<ul>
+<li>Server-centric design consumes a lot of server-side CPU resources. <ul>
+<li>CPU speed grows slower than network speed, thus becomes a performance bottleneck. </li>
+<li>CPU cache is constantly poluted by random access the data preserved in B+ tree (KV Store data structure).</li>
+</ul>
+</li>
+<li>Client-direct design uses client-side NIC to directly read data from server through single-sided RDMA.<ul>
+<li>Good: Bypass CPU bottleneck.</li>
+<li>Bad: Limited operations (read/write) makes traversing a B+ tree multiple round trips.</li>
+</ul>
+</li>
+<li>Client-side caching of the B+ tree.<ul>
+<li>Good: No need to do remote access, and use client-side CPU to traverse the B+ tree.</li>
+<li>Bad: Consumes too much memory.</li>
+<li>Bad: If there’s a cache miss, client has to get the whole tree from the server.</li>
+</ul>
+</li>
+</ul>
+<h3 id="Design-XStore"><a href="#Design-XStore" class="headerlink" title="Design (XStore)"></a>Design (XStore)</h3><ul>
+<li>Hybrid operations<ul>
+<li>Server-centric for data write because NIC cannot handle complex tree insert/update.</li>
+<li>Client-direct get/scan to server hashtable index.</li>
+<li>Client-side <strong>Learned Cache</strong>.</li>
+</ul>
+</li>
+<li>Learned Cache<ul>
+<li>Enlightened from <a target="_blank" rel="noopener" href="https://www.cl.cam.ac.uk/~ey204/teaching/ACS/R244_2018_2019/papers/Kraska_SIGMOD_2018.pdf">learned index</a> @SIGMOD’18.</li>
+<li>At the server side, learn a model of the mapping of <code>Key = B+ address</code>. Then send this model (Linear Regression) to client. </li>
+<li>Learned model is usually very small.</li>
+<li>The model gives a range of addresses given a key -&gt; 100% guarantee that the key is within these addresses.</li>
+</ul>
+</li>
+<li>Two round trips to get a key<ul>
+<li>Given the addresses, get all keys with the address -&gt; determine which address is the actual one.</li>
+<li>Go the address and fetch the value.</li>
+</ul>
+</li>
+<li>Challenge 1: learned index assumes the addresses are sorted -&gt; not in B+ tree<ul>
+<li>Make a logical address to leaf nodes that are sorted.</li>
+<li>Trasition table that maps <code>logical address = physical address</code>. </li>
+<li>Trasition table is also cached in client-side.</li>
+</ul>
+</li>
+<li>Challenge 2: KV Store is dynamically changing due to updates<ul>
+<li>Retrain the model after update -&gt; invalidate client mode -&gt; client can fetch the model on-demand. </li>
+<li>Client can retrive partial model as the model is partitioned. </li>
+</ul>
+</li>
+</ul>
+<h3 id="Evaluation"><a href="#Evaluation" class="headerlink" title="Evaluation"></a>Evaluation</h3><ul>
+<li>Testbed: 16-node cluster (24 cores), 2 ConnectX-4 RDMA (one node is server, rest is clients)</li>
+<li>Workload: YCSB</li>
+<li>Highlight:<ul>
+<li>The memory footprint is very small (16B size for the model). 150MB vs 600MB</li>
+</ul>
+</li>
+</ul>
+<h3 id="Comment"><a href="#Comment" class="headerlink" title="Comment"></a>Comment</h3><p>This is a paper that adopts an existing idea (learned index) in the KV Store and solves the problem of too much memory consumption in client side. I haven’t read the learned index paper and not sure where was that idea originally used (maybe database?). It’s a good adoption and well executed paper. </p>
+
+        </div>
+
+        
+        <section class="post-copyright">
+            
+            <p class="copyright-item">
+                <span>Author:</span>
+                <span>Luna Xu</span>
+            </p>
+            
+            
+            
+            
+
+        </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                    <a href="/tag/kvstore/"># kvstore</a>
+                    
+                    <a href="/tag/OSDI20/"># OSDI20</a>
+                    
+                    
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+            <a class="prev" rel="prev" href="/2021/02/19/paper2/">From WiscKey to Bourbon: A Learned Index for Log-Structured Merge Trees</a>
+            
+            
+            <a class="next" rel="next" href="/2020/04/29/hello-world/">Hexo CSS Style Problem</a>
+            
+        </section>
+
+
+    </article>
+</div>
+        </div>
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<footer id="footer" class="footer">
+    <div class="copyright">
+   <span>© Luna Xu | Total visitors: <span id="busuanzi_value_site_uv"></span></span>
+    </div>
+    <!--
+    <span id="busuanzi_container_site_uv"> Visitors: <span id="busuanzi_value_site_uv"></span> Cuties</span>
+        <span>© Luna Xu | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+-->
+</footer>
+
+    </div>
+</body>
+</html>
